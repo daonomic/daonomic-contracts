@@ -1,0 +1,21 @@
+{
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "keywords": [
+    "ethereum",
+    "solidity"
+  ],
+  "dependencies": {
+    "@daonomic/util": "~0.1"
+  },
+  "devDependencies": {
+    "@daonomic/tests-common": "~0.1",
+    "@daonomic/tokens": "~0.1",
+    "@daonomic/sale": "~0.1"
+  }
+}
