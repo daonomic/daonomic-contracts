@@ -1,19 +1,39 @@
 pragma solidity ^0.4.21;
+pragma experimental ABIEncoderV2;
 
 import "@daonomic/util/contracts/SecuredImpl.sol";
 import "@daonomic/util/contracts/OwnableImpl.sol";
+import "@daonomic/interfaces/contracts/MintableToken.sol";
+import "./TokenHolder.sol";
 
 contract IcoFactory {
     event TokenCreated(address addr);
     event SaleCreated(address addr);
+    event HolderCreated(string name, address addr);
 
-    function createIco(bytes token, bytes sale) public {
+    struct Holder {
+        string name;
+        uint256 amount;
+    }
+
+    function createToken(bytes token, Holder[] holders) public returns (address) {
         address tokenAddress = create(token);
         emit TokenCreated(tokenAddress);
+        for (uint i = 0; i < holders.length; i++) {
+            TokenHolder deployed = new TokenHolder(tokenAddress);
+            deployed.transferOwnership(msg.sender);
+            MintableToken(tokenAddress).mint(deployed, holders[i].amount);
+            emit HolderCreated(holders[i].name, deployed);
+        }
+        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
+        return tokenAddress;
+    }
+
+    function createIco(bytes token, bytes sale, Holder[] holders) public {
+        address tokenAddress = createToken(token, holders);
         address saleAddress = create(concat(sale, bytes32(tokenAddress)));
         emit SaleCreated(saleAddress);
         SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
-        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
         OwnableImpl(saleAddress).transferOwnership(msg.sender);
     }
 

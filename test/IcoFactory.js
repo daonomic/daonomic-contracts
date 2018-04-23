@@ -18,7 +18,7 @@ contract("IcoFactory", accounts => {
     var TokenCreated = factory.TokenCreated({});
     var SaleCreated = factory.SaleCreated({});
 
-    var tx = await factory.createIco(data.token, data.sale);
+    var tx = await factory.createIco(data.token, data.sale, []);//todo add test after truffle fix
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
 
