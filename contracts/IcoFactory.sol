@@ -16,7 +16,21 @@ contract IcoFactory {
         uint256 amount;
     }
 
-    function createToken(bytes token, Holder[] holders) public returns (address) {
+    function createIco(bytes token, bytes sale, Holder[] holders) public {
+        address tokenAddress = createTokenInternal(token, holders);
+        address saleAddress = create(concat(sale, bytes32(tokenAddress)));
+        emit SaleCreated(saleAddress);
+        SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
+        OwnableImpl(saleAddress).transferOwnership(msg.sender);
+        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
+    }
+
+    function createToken(bytes token, Holder[] holders) public {
+        address tokenAddress = createTokenInternal(token, holders);
+        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
+    }
+
+    function createTokenInternal(bytes token, Holder[] holders) internal returns (address) {
         address tokenAddress = create(token);
         emit TokenCreated(tokenAddress);
         for (uint i = 0; i < holders.length; i++) {
@@ -25,16 +39,7 @@ contract IcoFactory {
             MintableToken(tokenAddress).mint(deployed, holders[i].amount);
             emit HolderCreated(holders[i].name, deployed);
         }
-        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
         return tokenAddress;
-    }
-
-    function createIco(bytes token, bytes sale, Holder[] holders) public {
-        address tokenAddress = createToken(token, holders);
-        address saleAddress = create(concat(sale, bytes32(tokenAddress)));
-        emit SaleCreated(saleAddress);
-        SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
-        OwnableImpl(saleAddress).transferOwnership(msg.sender);
     }
 
     function create(bytes code) internal returns (address addr) {
