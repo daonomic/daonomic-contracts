@@ -54,8 +54,8 @@ module.exports = {
       },
       network_id: 1,
       from: "0x23c029883a36e11aa19c7cf6b180b390fbf8b028",
-      gas: 100000,
-	  gasPrice: 1000000000
+      gas: 1000000,
+	  gasPrice: 3000000000
     }
   },
   solc: {
