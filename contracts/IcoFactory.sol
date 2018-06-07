@@ -1,51 +1,74 @@
-pragma solidity ^0.4.21;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.4.24;
 
 import "@daonomic/util/contracts/SecuredImpl.sol";
 import "@daonomic/util/contracts/OwnableImpl.sol";
 import "@daonomic/interfaces/contracts/MintableToken.sol";
+import "@daonomic/regulated/contracts/RegulatedTokenImpl.sol";
+import "@daonomic/regulated/contracts/RegulatorServiceImpl.sol";
+import "@daonomic/regulated/contracts/KycProviderImpl.sol";
+import "@daonomic/regulated/contracts/AllowRegulationRule.sol";
+import "@daonomic/regulated/contracts/Jurisdictions.sol";
 import "./TokenHolder.sol";
 
-contract IcoFactory {
-    event TokenCreated(address addr);
-    event SaleCreated(address addr);
-    event HolderCreated(string name, address addr);
+contract IcoFactory is Jurisdictions {
+    RegulatorServiceImpl public regulatorService;
+    AllowRegulationRule public allowRegulationRule;
 
-    struct Holder {
-        string name;
-        uint256 amount;
+    event TokenCreated(address addr);
+    event KycProviderCreated(address addr);
+    event SaleCreated(address addr);
+    event HolderCreated(address addr);
+
+    constructor(RegulatorServiceImpl _regulatorService, AllowRegulationRule _allowRegulationRule) public {
+        regulatorService = _regulatorService;
+        allowRegulationRule = _allowRegulationRule;
     }
 
-    function createIco(bytes token, bytes sale, Holder[] holders) public {
-        address tokenAddress = createTokenInternal(token, holders);
-        address saleAddress = create(concat(sale, bytes32(tokenAddress)));
+    function createIco(bytes token, address[] memory kycProviders, bytes sale, uint[] memory holders) public {
+        address tokenAddress = createTokenInternal(token, kycProviders, holders);
+        address saleAddress = deploy(concat(sale, bytes32(tokenAddress)));
         emit SaleCreated(saleAddress);
         SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
         OwnableImpl(saleAddress).transferOwnership(msg.sender);
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createToken(bytes token, Holder[] holders) public {
-        address tokenAddress = createTokenInternal(token, holders);
+    function createToken(bytes token, address[] memory kycProviders, uint[] memory holders) public {
+        address tokenAddress = createTokenInternal(token, kycProviders, holders);
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createTokenInternal(bytes token, Holder[] holders) internal returns (address) {
-        address tokenAddress = create(token);
+    function createTokenInternal(bytes token, address[] memory kycProviders, uint[] memory holders) internal returns (address) {
+        address tokenAddress;
+        if (kycProviders.length != 0) {
+            for (uint j = 0; j < kycProviders.length; j++) {
+                if (kycProviders[j] == address(0)) {
+                    KycProviderImpl newKyc = new KycProviderImpl();
+                    newKyc.transferOwnership(msg.sender);
+                    emit KycProviderCreated(address(newKyc));
+                    kycProviders[j] = newKyc;
+                }
+            }
+            tokenAddress = deploy(concat(token, bytes32(address(regulatorService))));
+            regulatorService.setKycProviders(tokenAddress, kycProviders);
+            regulatorService.setRule(tokenAddress, ALLOWED, address(allowRegulationRule));
+        } else {
+            tokenAddress = deploy(token);
+        }
         emit TokenCreated(tokenAddress);
         for (uint i = 0; i < holders.length; i++) {
             TokenHolder deployed = new TokenHolder(tokenAddress);
             deployed.transferOwnership(msg.sender);
-            MintableToken(tokenAddress).mint(deployed, holders[i].amount);
-            emit HolderCreated(holders[i].name, deployed);
+            MintableToken(tokenAddress).mint(deployed, holders[i]);
+            emit HolderCreated(deployed);
         }
         return tokenAddress;
     }
 
-    function create(bytes code) internal returns (address addr) {
+    function deploy(bytes binary) internal returns (address result) {
         assembly {
-            addr := create(0, add(code, 0x20), mload(code))
-            switch extcodesize(addr) case 0 {revert(0, 0)} default {}
+            result := create(0, add(binary, 0x20), mload(binary))
+            switch extcodesize(result) case 0 {revert(0, 0)} default {}
         }
     }
 
