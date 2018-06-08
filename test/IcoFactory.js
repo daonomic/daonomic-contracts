@@ -28,14 +28,14 @@ contract("IcoFactory", accounts => {
   });
 
   beforeEach(async () => {
-    factory = await IcoFactory.new(regulatorService.address, allowRegulationRule.address);
+    factory = await IcoFactory.new(regulatorService.address);
     TokenCreated = factory.TokenCreated({});
     SaleCreated = factory.SaleCreated({});
     KycProviderCreated = factory.KycProviderCreated({});
   });
 
   it("should deploy simple token", async () => {
-    var tx = await factory.createToken(data.token, [], []);
+    var tx = await factory.createToken(data.token, [], [], [], []);
     var tokenCreated = await awaitEvent(TokenCreated);
 
     var token = await MintableToken.at(tokenCreated.args.addr);
@@ -45,7 +45,7 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createToken(data.regulatedToken, ["0x0000000000000000000000000000000000000000"], []);
+    var tx = await factory.createToken(data.regulatedToken, ["0x0000000000000000000000000000000000000000"], [], [await factory.ALLOWED()], [allowRegulationRule.address]);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 
@@ -66,11 +66,12 @@ contract("IcoFactory", accounts => {
     var TokenCreated = factory.TokenCreated({});
     var SaleCreated = factory.SaleCreated({});
 
-    var tx = await factory.createIco(data.token, [], data.sale, []);
+    var tx = await factory.createIco(data.token, [], [], [], [], data.sale);
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
 
     var sale = await MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
   });
+
 });

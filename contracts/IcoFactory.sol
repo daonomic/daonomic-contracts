@@ -12,20 +12,18 @@ import "./TokenHolder.sol";
 
 contract IcoFactory is Jurisdictions {
     RegulatorServiceImpl public regulatorService;
-    AllowRegulationRule public allowRegulationRule;
 
     event TokenCreated(address addr);
     event KycProviderCreated(address addr);
     event SaleCreated(address addr);
     event HolderCreated(address addr);
 
-    constructor(RegulatorServiceImpl _regulatorService, AllowRegulationRule _allowRegulationRule) public {
+    constructor(RegulatorServiceImpl _regulatorService) public {
         regulatorService = _regulatorService;
-        allowRegulationRule = _allowRegulationRule;
     }
 
-    function createIco(bytes token, address[] memory kycProviders, bytes sale, uint[] memory holders) public {
-        address tokenAddress = createTokenInternal(token, kycProviders, holders);
+    function createIco(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules, bytes sale) public {
+        address tokenAddress = createTokenInternal(token, kycProviders, holders, jurisdictions, rules);
         address saleAddress = deploy(concat(sale, bytes32(tokenAddress)));
         emit SaleCreated(saleAddress);
         SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
@@ -33,12 +31,12 @@ contract IcoFactory is Jurisdictions {
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createToken(bytes token, address[] memory kycProviders, uint[] memory holders) public {
-        address tokenAddress = createTokenInternal(token, kycProviders, holders);
+    function createToken(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) public {
+        address tokenAddress = createTokenInternal(token, kycProviders, holders, jurisdictions, rules);
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createTokenInternal(bytes token, address[] memory kycProviders, uint[] memory holders) internal returns (address) {
+    function createTokenInternal(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) internal returns (address) {
         address tokenAddress;
         if (kycProviders.length != 0) {
             for (uint j = 0; j < kycProviders.length; j++) {
@@ -51,7 +49,10 @@ contract IcoFactory is Jurisdictions {
             }
             tokenAddress = deploy(concat(token, bytes32(address(regulatorService))));
             regulatorService.setKycProviders(tokenAddress, kycProviders);
-            regulatorService.setRule(tokenAddress, ALLOWED, address(allowRegulationRule));
+            require(jurisdictions.length == rules.length);
+            for (uint k = 0; k < jurisdictions.length; k++) {
+                regulatorService.setRule(tokenAddress, jurisdictions[i], rules[i]);
+            }
         } else {
             tokenAddress = deploy(token);
         }
