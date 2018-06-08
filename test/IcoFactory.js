@@ -5,6 +5,7 @@ var MintingSale = artifacts.require('MintingSaleMock.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
 var RegulatedTokenImpl = artifacts.require('RegulatedTokenImpl.sol');
 var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
+var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
 const awaitEvent = tests.awaitEvent;
@@ -20,6 +21,7 @@ contract("IcoFactory", accounts => {
   let TokenCreated;
   let SaleCreated;
   let KycProviderCreated;
+  let ALLOWED;
 
   before(async () => {
     data = require("./data.json");
@@ -29,13 +31,14 @@ contract("IcoFactory", accounts => {
 
   beforeEach(async () => {
     factory = await IcoFactory.new(regulatorService.address);
+    ALLOWED = await factory.ALLOWED();
     TokenCreated = factory.TokenCreated({});
     SaleCreated = factory.SaleCreated({});
     KycProviderCreated = factory.KycProviderCreated({});
   });
 
   it("should deploy simple token", async () => {
-    var tx = await factory.createToken(data.token, [], [], [], []);
+    var tx = await factory.createToken(data.token, ZERO, [], [], [], []);
     var tokenCreated = await awaitEvent(TokenCreated);
 
     var token = await MintableToken.at(tokenCreated.args.addr);
@@ -45,7 +48,7 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createToken(data.regulatedToken, ["0x0000000000000000000000000000000000000000"], [], [await factory.ALLOWED()], [allowRegulationRule.address]);
+    var tx = await factory.createToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [], [ALLOWED], [allowRegulationRule.address]);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 
@@ -56,7 +59,10 @@ contract("IcoFactory", accounts => {
 	  token.mint(accounts[1], 100)
 	);
 
-    await provider.setData(accounts[1], await factory.ALLOWED(), "");
+	await expectThrow(
+		provider.setData(accounts[1], ALLOWED, "", {from: accounts[1]})
+	);
+    await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
     await token.mint(accounts[1], 100);
     assert.equal(await token.totalSupply(), 100);
     assert.equal(await token.balanceOf(accounts[1]), 100);
@@ -66,7 +72,7 @@ contract("IcoFactory", accounts => {
     var TokenCreated = factory.TokenCreated({});
     var SaleCreated = factory.SaleCreated({});
 
-    var tx = await factory.createIco(data.token, [], [], [], [], data.sale);
+    var tx = await factory.createIco(data.token, ZERO, [], [], [], [], data.sale);
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
 

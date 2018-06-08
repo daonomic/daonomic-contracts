@@ -7,6 +7,7 @@ import "@daonomic/regulated/contracts/RegulatedTokenImpl.sol";
 import "@daonomic/regulated/contracts/RegulatorServiceImpl.sol";
 import "@daonomic/regulated/contracts/KycProviderImpl.sol";
 import "@daonomic/regulated/contracts/AllowRegulationRule.sol";
+import "@daonomic/regulated/contracts/UsRegulationRule.sol";
 import "@daonomic/regulated/contracts/Jurisdictions.sol";
 import "./TokenHolder.sol";
 
@@ -22,8 +23,8 @@ contract IcoFactory is Jurisdictions {
         regulatorService = _regulatorService;
     }
 
-    function createIco(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules, bytes sale) public {
-        address tokenAddress = createTokenInternal(token, kycProviders, holders, jurisdictions, rules);
+    function createIco(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules, bytes sale) public {
+        address tokenAddress = createTokenInternal(token, operator, kycProviders, holders, jurisdictions, rules);
         address saleAddress = deploy(concat(sale, bytes32(tokenAddress)));
         emit SaleCreated(saleAddress);
         SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
@@ -31,17 +32,18 @@ contract IcoFactory is Jurisdictions {
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createToken(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) public {
-        address tokenAddress = createTokenInternal(token, kycProviders, holders, jurisdictions, rules);
+    function createToken(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) public {
+        address tokenAddress = createTokenInternal(token, operator, kycProviders, holders, jurisdictions, rules);
         OwnableImpl(tokenAddress).transferOwnership(msg.sender);
     }
 
-    function createTokenInternal(bytes token, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) internal returns (address) {
+    function createTokenInternal(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) internal returns (address) {
         address tokenAddress;
         if (kycProviders.length != 0) {
             for (uint j = 0; j < kycProviders.length; j++) {
                 if (kycProviders[j] == address(0)) {
                     KycProviderImpl newKyc = new KycProviderImpl();
+                    newKyc.transferRole("operator", operator);
                     newKyc.transferOwnership(msg.sender);
                     emit KycProviderCreated(address(newKyc));
                     kycProviders[j] = newKyc;
