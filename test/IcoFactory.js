@@ -38,17 +38,17 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy simple token", async () => {
-    var tx = await factory.createToken(data.token, ZERO, [], [], [], []);
+    var tx = await factory.createSimpleToken(data.token, []);
     var tokenCreated = await awaitEvent(TokenCreated);
-
     var token = await MintableToken.at(tokenCreated.args.addr);
+
     await token.mint(accounts[1], 100);
     assert.equal(await token.totalSupply(), 100);
     assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [], [ALLOWED], [allowRegulationRule.address]);
+    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [ALLOWED], [allowRegulationRule.address], []);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 
@@ -68,16 +68,42 @@ contract("IcoFactory", accounts => {
     assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 
-  it("should create working ico", async () => {
-    var TokenCreated = factory.TokenCreated({});
-    var SaleCreated = factory.SaleCreated({});
+  it("should deploy simple ico", async () => {
+    var tx = await factory.createSimpleIco(data.token, [], data.simpleSale);
 
-    var tx = await factory.createIco(data.token, ZERO, [], [], [], [], data.sale);
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
+    var sale = await MintingSale.at(saleCreated.args.addr);
+    var token = await MintableToken.at(tokenCreated.args.addr);
+    assert.equal(await sale.token(), tokenCreated.args.addr);
+
+    await sale.sendTransaction({from: accounts[1], value: 5});
+    assert.equal(await token.balanceOf(accounts[1]), 5000);
+  });
+
+  it("should deploy kyc ico and new provider", async () => {
+    var tx = await factory.createKycIco(data.token, [], data.kycSale, accounts[9], ZERO);
+
+    var tokenCreated = await awaitEvent(TokenCreated);
+    var saleCreated = await awaitEvent(SaleCreated);
+    var providerCreated = await awaitEvent(KycProviderCreated);
 
     var sale = await MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
+    var provider = await KycProviderImpl.at(providerCreated.args.addr);
+
+    assert.equal(await sale.canBuy(accounts[1]), false);
+    await expectThrow(
+        sale.sendTransaction({from: accounts[1], value: 5})
+    );
+    await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
+    assert.equal(await sale.canBuy(accounts[1]), true);
+
+    console.log("sold: " + (await sale.getSold(ZERO, 5)));
+    await sale.sendTransaction({from: accounts[1], value: 5});
+    await expectThrow(
+        sale.sendTransaction({from: accounts[2], value: 5})
+    );
   });
 
 });

@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+
 import "@daonomic/util/contracts/SecuredImpl.sol";
 import "@daonomic/util/contracts/OwnableImpl.sol";
 import "@daonomic/interfaces/contracts/MintableToken.sol";
@@ -10,103 +11,41 @@ import "@daonomic/regulated/contracts/AllowRegulationRule.sol";
 import "@daonomic/regulated/contracts/UsRegulationRule.sol";
 import "@daonomic/regulated/contracts/Jurisdictions.sol";
 import "./TokenHolder.sol";
+import "./SimpleTokenFactory.sol";
+import "./RegulatedTokenFactory.sol";
 
-contract IcoFactory is Jurisdictions {
-    RegulatorServiceImpl public regulatorService;
 
-    event TokenCreated(address addr);
-    event KycProviderCreated(address addr);
+contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory {
     event SaleCreated(address addr);
-    event HolderCreated(address addr);
 
-    constructor(RegulatorServiceImpl _regulatorService) public {
-        regulatorService = _regulatorService;
+    constructor(RegulatorServiceImpl _regulatorService) RegulatedTokenFactory(_regulatorService) public {
     }
 
-    function createIco(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules, bytes sale) public {
-        address tokenAddress = createTokenInternal(token, operator, kycProviders, holders, jurisdictions, rules);
-        address saleAddress = deploy(concat(sale, bytes32(tokenAddress)));
-        emit SaleCreated(saleAddress);
-        SecuredImpl(tokenAddress).transferRole("minter", saleAddress);
-        OwnableImpl(saleAddress).transferOwnership(msg.sender);
-        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
+    function createSimpleIco(bytes tokenCode, uint[] memory holders, bytes saleCode) public {
+        address token = createSimpleTokenInternal(tokenCode, holders);
+        address sale = deploy(concat(saleCode, bytes32(token)));
+        finishCreate(token, sale);
     }
 
-    function createToken(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) public {
-        address tokenAddress = createTokenInternal(token, operator, kycProviders, holders, jurisdictions, rules);
-        OwnableImpl(tokenAddress).transferOwnership(msg.sender);
-    }
-
-    function createTokenInternal(bytes token, address operator, address[] memory kycProviders, uint[] memory holders, uint16[] memory jurisdictions, address[] memory rules) internal returns (address) {
-        address tokenAddress;
-        if (kycProviders.length != 0) {
-            for (uint j = 0; j < kycProviders.length; j++) {
-                if (kycProviders[j] == address(0)) {
-                    KycProviderImpl newKyc = new KycProviderImpl();
-                    newKyc.transferRole("operator", operator);
-                    newKyc.transferOwnership(msg.sender);
-                    emit KycProviderCreated(address(newKyc));
-                    kycProviders[j] = newKyc;
-                }
-            }
-            tokenAddress = deploy(concat(token, bytes32(address(regulatorService))));
-            regulatorService.setKycProviders(tokenAddress, kycProviders);
-            require(jurisdictions.length == rules.length);
-            for (uint k = 0; k < jurisdictions.length; k++) {
-                regulatorService.setRule(tokenAddress, jurisdictions[i], rules[i]);
-            }
-        } else {
-            tokenAddress = deploy(token);
+    function createKycIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
+        if (kycProvider == address(0)) {
+            kycProvider = createKycProvider(operator);
         }
-        emit TokenCreated(tokenAddress);
-        for (uint i = 0; i < holders.length; i++) {
-            TokenHolder deployed = new TokenHolder(tokenAddress);
-            deployed.transferOwnership(msg.sender);
-            MintableToken(tokenAddress).mint(deployed, holders[i]);
-            emit HolderCreated(deployed);
-        }
-        return tokenAddress;
+        address token = createSimpleTokenInternal(tokenCode, holders);
+        address sale = deploy(concat(saleCode, bytes32(token), bytes32(address(kycProvider))));
+        finishCreate(token, sale);
     }
 
-    function deploy(bytes binary) internal returns (address result) {
-        assembly {
-            result := create(0, add(binary, 0x20), mload(binary))
-            switch extcodesize(result) case 0 {revert(0, 0)} default {}
-        }
+    function createSecurityIco(bytes tokenCode, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders, bytes saleCode) public {
+        address token = createRegulatedTokenInternal(tokenCode, operator, kycProviders, jurisdictions, rules, holders);
+        address sale = deploy(concat(saleCode, bytes32(token)));
+        finishCreate(token, sale);
     }
 
-    function concat(bytes _bytes, bytes32 _word) internal pure returns (bytes result) {
-        assembly {
-            result := mload(0x40)
-
-            //_bytes.length
-            let length := mload(_bytes)
-            //length of new bytes is _bytes.length + word length (0x20)
-            mstore(result, add(length, 0x20))
-
-            //current write memory location (memory counter)
-            let mc := add(result, 0x20)
-            let end := add(mc, length)
-
-            for {
-                //copy counter - read memory location
-                let cc := add(_bytes, 0x20)
-            } lt(mc, end) {
-                mc := add(mc, 0x20)
-                cc := add(cc, 0x20)
-            } {
-                mstore(mc, mload(cc))
-            }
-
-            //store added word
-            mstore(end, _word)
-            end := add(mc, 0x20)
-
-            //memory end including padding
-            mstore(0x40, and(
-                add(add(end, iszero(add(0x20, mload(_bytes)))), 31),
-                not(31) // Round down to the nearest 32 bytes.
-            ))
-        }
+    function finishCreate(address token, address sale) {
+        emit SaleCreated(sale);
+        SecuredImpl(token).transferRole("minter", sale);
+        OwnableImpl(sale).transferOwnership(msg.sender);
+        OwnableImpl(token).transferOwnership(msg.sender);
     }
 }
