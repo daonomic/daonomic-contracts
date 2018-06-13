@@ -1,5 +1,6 @@
 var RegulatorServiceImpl = artifacts.require('RegulatorServiceImpl.sol');
 var AllowRegulationRule = artifacts.require('AllowRegulationRule.sol');
+var FakeKycProvider = artifacts.require('FakeKycProvider.sol');
 var IcoFactory = artifacts.require('IcoFactory.sol');
 var MintingSale = artifacts.require('MintingSaleMock.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
@@ -17,6 +18,7 @@ contract("IcoFactory", accounts => {
   let data;
   let regulatorService;
   let allowRegulationRule;
+  let fakeKycProvider;
 
   let factory;
   let TokenCreated;
@@ -28,10 +30,11 @@ contract("IcoFactory", accounts => {
     data = require("./data.json");
     regulatorService = await RegulatorServiceImpl.new();
     allowRegulationRule = await AllowRegulationRule.new();
+    fakeKycProvider = await FakeKycProvider.new();
   });
 
   beforeEach(async () => {
-    factory = await IcoFactory.new(regulatorService.address);
+    factory = await IcoFactory.new(regulatorService.address, fakeKycProvider.address, allowRegulationRule.address);
     ALLOWED = await factory.ALLOWED();
     TokenCreated = factory.TokenCreated({});
     SaleCreated = factory.SaleCreated({});
@@ -49,7 +52,7 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [ALLOWED], [allowRegulationRule.address], []);
+    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [ALLOWED], [allowRegulationRule.address], [100]);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 
@@ -65,7 +68,7 @@ contract("IcoFactory", accounts => {
 	);
     await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
     await token.mint(accounts[1], 100);
-    assert.equal(await token.totalSupply(), 100);
+    assert.equal(await token.totalSupply(), 200);
     assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 

@@ -18,7 +18,7 @@ import "./RegulatedTokenFactory.sol";
 contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory {
     event SaleCreated(address addr);
 
-    constructor(RegulatorServiceImpl _regulatorService) RegulatedTokenFactory(_regulatorService) public {
+    constructor(RegulatorServiceImpl _regulatorService, FakeKycProvider _fakeKycProvider, AllowRegulationRule _allowRegulationRule) RegulatedTokenFactory(_regulatorService, _fakeKycProvider, _allowRegulationRule) public {
     }
 
     function createSimpleIco(bytes tokenCode, uint[] memory holders, bytes saleCode) public {
