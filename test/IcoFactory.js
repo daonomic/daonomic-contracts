@@ -52,7 +52,7 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], ["0x0000000000000000000000000000000000000000"], [ALLOWED], [allowRegulationRule.address], [100]);
+    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], [ZERO], [ALLOWED], [allowRegulationRule.address], [100]);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 
@@ -78,7 +78,7 @@ contract("IcoFactory", accounts => {
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
     var sale = MintingSale.at(saleCreated.args.addr);
-    var token = await MintableToken.at(tokenCreated.args.addr);
+    var token = MintableToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
 
     await sale.sendTransaction({from: accounts[5], value: 5});
@@ -94,7 +94,7 @@ contract("IcoFactory", accounts => {
 
     var sale = await MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
-    var provider = await KycProviderImpl.at(providerCreated.args.addr);
+    var provider = KycProviderImpl.at(providerCreated.args.addr);
 
     assert.equal(await sale.canBuy(accounts[1]), false);
     await expectThrow(
@@ -103,6 +103,33 @@ contract("IcoFactory", accounts => {
     await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
     assert.equal(await sale.canBuy(accounts[1]), true);
 
+    await sale.sendTransaction({from: accounts[1], value: 5});
+    await expectThrow(
+        sale.sendTransaction({from: accounts[2], value: 5})
+    );
+  });
+
+  it("should deploy security token ico and new provider", async () => {
+    var tx = await factory.createSecurityIco(data.regulatedToken, accounts[9], [ZERO, randomAddress()], [ALLOWED], [allowRegulationRule.address], [], data.securitySale);
+
+    var tokenCreated = await awaitEvent(TokenCreated);
+    var saleCreated = await awaitEvent(SaleCreated);
+    var providerCreated = await awaitEvent(KycProviderCreated);
+
+    var sale = await MintingSale.at(saleCreated.args.addr);
+    assert.equal(await sale.token(), tokenCreated.args.addr);
+    var provider = KycProviderImpl.at(providerCreated.args.addr);
+
+    console.log("test1");
+    assert.equal(await sale.canBuy(accounts[1]), false);
+    await expectThrow(
+        sale.sendTransaction({from: accounts[1], value: 5})
+    );
+    console.log("test3");
+    await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
+    assert.equal(await sale.canBuy(accounts[1]), true);
+
+    console.log("test5");
     await sale.sendTransaction({from: accounts[1], value: 5});
     await expectThrow(
         sale.sendTransaction({from: accounts[2], value: 5})
