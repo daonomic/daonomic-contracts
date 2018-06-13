@@ -110,26 +110,24 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy security token ico and new provider", async () => {
-    var tx = await factory.createSecurityIco(data.regulatedToken, accounts[9], [ZERO, randomAddress()], [ALLOWED], [allowRegulationRule.address], [], data.securitySale);
+    var usProvider = await KycProviderImpl.new();
+    var tx = await factory.createSecurityIco(data.regulatedToken, accounts[9], [ZERO, usProvider.address], [ALLOWED], [allowRegulationRule.address], [], data.securitySale);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
     var providerCreated = await awaitEvent(KycProviderCreated);
 
-    var sale = await MintingSale.at(saleCreated.args.addr);
-    assert.equal(await sale.token(), tokenCreated.args.addr);
+	var token = RegulatedTokenImpl.at(tokenCreated.args.addr);
+    var sale = MintingSale.at(saleCreated.args.addr);
+    assert.equal(await sale.token(), token.address);
     var provider = KycProviderImpl.at(providerCreated.args.addr);
 
-    console.log("test1");
     assert.equal(await sale.canBuy(accounts[1]), false);
     await expectThrow(
         sale.sendTransaction({from: accounts[1], value: 5})
     );
-    console.log("test3");
     await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
     assert.equal(await sale.canBuy(accounts[1]), true);
-
-    console.log("test5");
     await sale.sendTransaction({from: accounts[1], value: 5});
     await expectThrow(
         sale.sendTransaction({from: accounts[2], value: 5})
