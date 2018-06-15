@@ -42,7 +42,7 @@ contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory 
         finishCreate(token, sale);
     }
 
-    function finishCreate(address token, address sale) {
+    function finishCreate(address token, address sale) internal {
         emit SaleCreated(sale);
         SecuredImpl(token).transferRole("minter", sale);
         OwnableImpl(sale).transferOwnership(msg.sender);
