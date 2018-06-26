@@ -40,13 +40,20 @@ module.exports = {
       network_id: "*"
     },
     kovan: {
+      provider: () => createProvider("ether-dev"),
+      from: "0xc66d094ed928f7840a6b0d373c1cd825c97e3c7c",
+      gas: 4000000,
+      gasPrice: 1000000000,
+      network_id: "*"
+    },
+    kovan_trezor: {
       provider: () => {
         return require("@daonomic/trezor-web3-provider")("http://ether-dev:8545", "m/44'/1'/0'/4/0");
       },
       network_id: 3,
       from: "0xfe8f66be0fb118911342312520c7b3d77bbdcf64",
       gas: 2000000,
-	  gasPrice: 1000000000
+	    gasPrice: 1000000000
     },
     mainnet: {
       provider: () => {
@@ -55,7 +62,7 @@ module.exports = {
       network_id: 1,
       from: "0x23c029883a36e11aa19c7cf6b180b390fbf8b028",
       gas: 1000000,
-	  gasPrice: 3000000000
+	    gasPrice: 3000000000
     }
   },
   solc: {
