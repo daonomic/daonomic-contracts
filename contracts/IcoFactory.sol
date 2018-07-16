@@ -16,6 +16,8 @@ import "./RegulatedTokenFactory.sol";
 
 
 contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory {
+    using SafeMath for uint;
+
     event SaleCreated(address addr);
 
     constructor(RegulatorServiceImpl _regulatorService, FakeKycProvider _fakeKycProvider, AllowRegulationRule _allowRegulationRule) RegulatedTokenFactory(_regulatorService, _fakeKycProvider, _allowRegulationRule) public {
@@ -25,6 +27,14 @@ contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory 
         address token = createSimpleTokenInternal(tokenCode, holders);
         address sale = deploy(concat(saleCode, bytes32(token)));
         finishCreate(token, sale);
+    }
+
+    function createTransferringIco(bytes tokenCode, uint cap, uint[] memory holders, bytes saleCode) public {
+        address token = createSimpleTokenInternal(tokenCode, holders);
+        address sale = deploy(concat(saleCode, bytes32(token)));
+        BasicToken(token).transfer(sale, cap);
+        BasicToken(token).transfer(msg.sender, BasicToken(token).totalSupply().sub(cap));
+        transferOwnerships(token, sale);
     }
 
     function createKycIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
@@ -43,8 +53,12 @@ contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory 
     }
 
     function finishCreate(address token, address sale) internal {
-        emit SaleCreated(sale);
         SecuredImpl(token).transferRole("minter", sale);
+        transferOwnerships(token, sale);
+    }
+
+    function transferOwnerships(address token, address sale) internal {
+        emit SaleCreated(sale);
         OwnableImpl(sale).transferOwnership(msg.sender);
         OwnableImpl(token).transferOwnership(msg.sender);
     }

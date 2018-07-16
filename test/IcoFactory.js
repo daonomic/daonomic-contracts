@@ -3,7 +3,9 @@ var AllowRegulationRule = artifacts.require('AllowRegulationRule.sol');
 var FakeKycProvider = artifacts.require('FakeKycProvider.sol');
 var IcoFactory = artifacts.require('IcoFactory.sol');
 var MintingSale = artifacts.require('MintingSaleMock.sol');
+var TransferringSale = artifacts.require('TransferringSale.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
+var BasicToken = artifacts.require('BasicToken.sol');
 var Secured = artifacts.require('Secured.sol');
 var RegulatedMintableTokenImpl = artifacts.require('RegulatedMintableTokenImpl.sol');
 var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
@@ -80,6 +82,21 @@ contract("IcoFactory", accounts => {
     var sale = MintingSale.at(saleCreated.args.addr);
     var token = MintableToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
+
+    await sale.sendTransaction({from: accounts[5], value: 5});
+    assert.equal(await token.balanceOf(accounts[5]), 5000);
+  });
+
+  it("should deploy transferring ico", async () => {
+    var tx = await factory.createTransferringIco(data.issuedToken, "100000000000000000000000", [], data.transferringSale);
+
+    var tokenCreated = await awaitEvent(TokenCreated);
+    var saleCreated = await awaitEvent(SaleCreated);
+    var sale = TransferringSale.at(saleCreated.args.addr);
+    var token = BasicToken.at(tokenCreated.args.addr);
+    assert.equal(await sale.token(), tokenCreated.args.addr);
+    assert.equal(await token.balanceOf(sale.address), 100000000000000000000000);
+    assert.equal(await token.balanceOf(accounts[0]), 900000000000000000000000);
 
     await sale.sendTransaction({from: accounts[5], value: 5});
     assert.equal(await token.balanceOf(accounts[5]), 5000);
