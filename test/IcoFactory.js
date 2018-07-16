@@ -5,7 +5,7 @@ var IcoFactory = artifacts.require('IcoFactory.sol');
 var MintingSale = artifacts.require('MintingSaleMock.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
 var Secured = artifacts.require('Secured.sol');
-var RegulatedTokenImpl = artifacts.require('RegulatedTokenImpl.sol');
+var RegulatedMintableTokenImpl = artifacts.require('RegulatedMintableTokenImpl.sol');
 var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
@@ -57,7 +57,7 @@ contract("IcoFactory", accounts => {
     var tokenCreated = await awaitEvent(TokenCreated);
 
     var provider = KycProviderImpl.at(providerCreated.args.addr);
-    var token = RegulatedTokenImpl.at(tokenCreated.args.addr);
+    var token = RegulatedMintableTokenImpl.at(tokenCreated.args.addr);
 
 	await expectThrow(
 	  token.mint(accounts[1], 100)
@@ -117,7 +117,7 @@ contract("IcoFactory", accounts => {
     var saleCreated = await awaitEvent(SaleCreated);
     var providerCreated = await awaitEvent(KycProviderCreated);
 
-	var token = RegulatedTokenImpl.at(tokenCreated.args.addr);
+	  var token = RegulatedMintableTokenImpl.at(tokenCreated.args.addr);
     var sale = MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), token.address);
     var provider = KycProviderImpl.at(providerCreated.args.addr);
