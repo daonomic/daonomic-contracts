@@ -4,12 +4,12 @@ pragma experimental ABIEncoderV2;
 
 import "@daonomic/regulated/contracts/KycProviderImpl.sol";
 import "@daonomic/regulated/contracts/RegulatorServiceImpl.sol";
-import "./AbstractTokenFactory.sol";
-import "./FakeKycProvider.sol";
 import "@daonomic/regulated/contracts/AllowRegulationRule.sol";
+import "./FakeKycProvider.sol";
+import "./MintableTokenFactory.sol";
 
 
-contract RegulatedTokenFactory is AbstractTokenFactory, Jurisdictions {
+contract RegulatedTokenFactory is MintableTokenFactory, Jurisdictions {
     event KycProviderCreated(address addr);
 
     RegulatorServiceImpl public regulatorService;

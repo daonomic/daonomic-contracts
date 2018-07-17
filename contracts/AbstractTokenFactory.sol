@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 
-import "@daonomic/interfaces/contracts/MintableToken.sol";
 import "./Deployer.sol";
 import "./TokenHolder.sol";
 
@@ -14,8 +13,10 @@ contract AbstractTokenFactory is Deployer {
         for (uint i = 0; i < amounts.length; i++) {
             TokenHolder deployed = new TokenHolder(token);
             deployed.transferOwnership(msg.sender);
-            MintableToken(token).mint(deployed, amounts[i]);
+            initHolder(token, deployed, amounts[i]);
             emit HolderCreated(deployed);
         }
     }
+
+    function initHolder(address token, address holder, uint amount) internal;
 }

@@ -33,7 +33,7 @@ contract IcoFactory is Jurisdictions, SimpleTokenFactory, RegulatedTokenFactory 
         address token = createSimpleTokenInternal(tokenCode, holders);
         address sale = deploy(concat(saleCode, bytes32(token)));
         BasicToken(token).transfer(sale, cap);
-        BasicToken(token).transfer(msg.sender, BasicToken(token).totalSupply().sub(cap));
+        BasicToken(token).transfer(msg.sender, BasicToken(token).balanceOf(this));
         transferOwnerships(token, sale);
     }
 
