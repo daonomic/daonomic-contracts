@@ -1,7 +1,7 @@
 var RegulatorServiceImpl = artifacts.require('RegulatorServiceImpl.sol');
 var AllowRegulationRule = artifacts.require('AllowRegulationRule.sol');
 var FakeKycProvider = artifacts.require('FakeKycProvider.sol');
-var IcoFactory = artifacts.require('IcoFactory.sol');
+var IcoFactory = artifacts.require('TransferringIcoFactory.sol');
 var MintingSale = artifacts.require('MintingSaleMock.sol');
 var TransferringSale = artifacts.require('TransferringSale.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
@@ -16,7 +16,7 @@ const awaitEvent = tests.awaitEvent;
 const expectThrow = tests.expectThrow;
 const randomAddress = tests.randomAddress;
 
-contract("IcoFactory", accounts => {
+contract("TransferringIcoFactory", accounts => {
   let data;
   let regulatorService;
   let allowRegulationRule;
@@ -44,15 +44,16 @@ contract("IcoFactory", accounts => {
   });
 
   it("should deploy simple token", async () => {
-    var tx = await factory.createSimpleToken(data.simpleToken, []);
+    var tx = await factory.createSimpleToken(data.issuedToken, []);
     var tokenCreated = await awaitEvent(TokenCreated);
-    var token = await MintableToken.at(tokenCreated.args.addr);
+    var token = await BasicToken.at(tokenCreated.args.addr);
 
-    await token.mint(accounts[1], 100);
-    assert.equal(await token.totalSupply(), 100);
-    assert.equal(await token.balanceOf(accounts[1]), 100);
+//    await token.transfer(accounts[1], 100);
+//    assert.equal(await token.totalSupply(), 1000000000000000000000000);
+//    assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 
+/*
   it("should deploy regulated token and kyc provider", async () => {
     var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], [ZERO], [ALLOWED], [allowRegulationRule.address], [100]);
     var providerCreated = await awaitEvent(KycProviderCreated);
@@ -61,32 +62,36 @@ contract("IcoFactory", accounts => {
     var provider = KycProviderImpl.at(providerCreated.args.addr);
     var token = RegulatedMintableTokenImpl.at(tokenCreated.args.addr);
 
-	await expectThrow(
-	  token.mint(accounts[1], 100)
-	);
+		await expectThrow(
+		  token.mint(accounts[1], 100)
+		);
 
-	await expectThrow(
-		provider.setData(accounts[1], ALLOWED, "", {from: accounts[1]})
-	);
+		await expectThrow(
+			provider.setData(accounts[1], ALLOWED, "", {from: accounts[1]})
+		);
     await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
     await token.mint(accounts[1], 100);
     assert.equal(await token.totalSupply(), 200);
     assert.equal(await token.balanceOf(accounts[1]), 100);
   });
+*/
 
   it("should deploy simple ico", async () => {
-    var tx = await factory.createSimpleIco(data.simpleToken, [], data.simpleSale);
+    var tx = await factory.createSimpleIco(data.issuedToken, "100000000000000000000000", [], data.transferringSale);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
-    var sale = MintingSale.at(saleCreated.args.addr);
-    var token = MintableToken.at(tokenCreated.args.addr);
+    var sale = TransferringSale.at(saleCreated.args.addr);
+    var token = BasicToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
+    assert.equal(await token.balanceOf(sale.address), 100000000000000000000000);
+    assert.equal(await token.balanceOf(accounts[0]), 900000000000000000000000);
 
     await sale.sendTransaction({from: accounts[5], value: 5});
     assert.equal(await token.balanceOf(accounts[5]), 5000);
   });
 
+/*
   it("should deploy kyc ico and new provider", async () => {
     var tx = await factory.createKycIco(data.simpleToken, [], data.kycSale, accounts[9], ZERO);
 
@@ -135,5 +140,6 @@ contract("IcoFactory", accounts => {
         sale.sendTransaction({from: accounts[2], value: 5})
     );
   });
+*/
 
 });

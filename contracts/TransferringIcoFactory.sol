@@ -13,9 +13,10 @@ import "@daonomic/regulated/contracts/Jurisdictions.sol";
 import "./TokenHolder.sol";
 import "./SimpleTokenFactory.sol";
 import "./RegulatedTokenFactory.sol";
+import "./NonMintableTokenFactory.sol";
 
 
-contract IcoFactory is Jurisdictions, MintableTokenFactory, SimpleTokenFactory, RegulatedTokenFactory {
+contract TransferringIcoFactory is Jurisdictions, NonMintableTokenFactory, SimpleTokenFactory, RegulatedTokenFactory {
     using SafeMath for uint;
 
     event SaleCreated(address addr);
@@ -23,29 +24,15 @@ contract IcoFactory is Jurisdictions, MintableTokenFactory, SimpleTokenFactory, 
     constructor(RegulatorServiceImpl _regulatorService, FakeKycProvider _fakeKycProvider, AllowRegulationRule _allowRegulationRule) RegulatedTokenFactory(_regulatorService, _fakeKycProvider, _allowRegulationRule) public {
     }
 
-    function createSimpleIco(bytes tokenCode, uint[] memory holders, bytes saleCode) public {
+    function createSimpleIco(bytes tokenCode, uint cap, uint[] memory holders, bytes saleCode) public {
         address token = createSimpleTokenInternal(tokenCode, holders);
         address sale = deploy(concat(saleCode, bytes32(token)));
-        finishCreate(token, sale);
-    }
-
-    function createKycIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
-        if (kycProvider == address(0)) {
-            kycProvider = createKycProvider(operator);
-        }
-        address token = createSimpleTokenInternal(tokenCode, holders);
-        address sale = deploy(concat(saleCode, bytes32(token), bytes32(address(kycProvider))));
-        finishCreate(token, sale);
-    }
-
-    function createSecurityIco(bytes tokenCode, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders, bytes saleCode) public {
-        address token = createRegulatedTokenInternal(tokenCode, operator, kycProviders, jurisdictions, rules, holders);
-        address sale = deploy(concat(saleCode, bytes32(token)));
-        finishCreate(token, sale);
+        BasicToken(token).transfer(sale, cap);
+        BasicToken(token).transfer(msg.sender, BasicToken(token).balanceOf(this));
+        transferOwnerships(token, sale);
     }
 
     function finishCreate(address token, address sale) internal {
-        SecuredImpl(token).transferRole("minter", sale);
         transferOwnerships(token, sale);
     }
 

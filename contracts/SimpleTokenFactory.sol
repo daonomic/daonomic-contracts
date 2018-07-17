@@ -4,7 +4,8 @@ pragma solidity ^0.4.24;
 import "./MintableTokenFactory.sol";
 
 
-contract SimpleTokenFactory is MintableTokenFactory {
+contract SimpleTokenFactory is AbstractTokenFactory {
+
     function createSimpleToken(bytes code, uint[] holders) public {
         address token = createSimpleTokenInternal(code, holders);
         OwnableImpl(token).transferOwnership(msg.sender);

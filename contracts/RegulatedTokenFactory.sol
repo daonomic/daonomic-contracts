@@ -9,7 +9,7 @@ import "./FakeKycProvider.sol";
 import "./MintableTokenFactory.sol";
 
 
-contract RegulatedTokenFactory is MintableTokenFactory, Jurisdictions {
+contract RegulatedTokenFactory is AbstractTokenFactory, Jurisdictions {
     event KycProviderCreated(address addr);
 
     RegulatorServiceImpl public regulatorService;
