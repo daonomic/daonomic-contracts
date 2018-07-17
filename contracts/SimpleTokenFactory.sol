@@ -6,12 +6,16 @@ import "./MintableTokenFactory.sol";
 
 contract SimpleTokenFactory is AbstractTokenFactory {
 
-    function createSimpleToken(bytes code, uint[] holders) public {
-        address token = createSimpleTokenInternal(code, holders);
+    function createToken(bytes code, uint[] holders) public {
+        address token = createTokenInternal(code, holders);
+        afterTokenCreate(token);
+    }
+
+    function afterTokenCreate(address token) internal {
         OwnableImpl(token).transferOwnership(msg.sender);
     }
 
-    function createSimpleTokenInternal(bytes code, uint[] memory holders) internal returns (address) {
+    function createTokenInternal(bytes code, uint[] memory holders) internal returns (address) {
         address token = deploy(code);
         emit TokenCreated(token);
         createTokenHolders(token, holders);
