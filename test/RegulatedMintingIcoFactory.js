@@ -43,7 +43,7 @@ contract("RegulatedMintingIcoFactory", accounts => {
   });
 
   it("should deploy regulated token and kyc provider", async () => {
-    var tx = await factory.createRegulatedToken(data.regulatedToken, accounts[9], [ZERO], [ALLOWED], [allowRegulationRule.address], [100]);
+    var tx = await factory.createToken(data.regulatedToken, accounts[9], [ZERO], [ALLOWED], [allowRegulationRule.address], [100]);
     var providerCreated = await awaitEvent(KycProviderCreated);
     var tokenCreated = await awaitEvent(TokenCreated);
 

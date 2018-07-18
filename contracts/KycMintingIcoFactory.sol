@@ -5,10 +5,10 @@ import "@daonomic/util/contracts/SafeMath.sol";
 import "./KycProviderFactory.sol";
 import "./MintableTokenFactory.sol";
 import "./SimpleTokenFactory.sol";
+import "./AbstractIcoFactory.sol";
 
 
-contract KycMintingIcoFactory is KycProviderFactory, MintableTokenFactory, SimpleTokenFactory {
-    event SaleCreated(address addr);
+contract KycMintingIcoFactory is AbstractIcoFactory, KycProviderFactory, MintableTokenFactory, SimpleTokenFactory {
 
     function createIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
         if (kycProvider == address(0)) {

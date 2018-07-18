@@ -4,10 +4,10 @@ pragma solidity ^0.4.24;
 import "./SimpleTokenFactory.sol";
 import "./NonMintableTokenFactory.sol";
 import "@daonomic/util/contracts/SafeMath.sol";
+import "./AbstractIcoFactory.sol";
 
 
-contract SimpleTransferringIcoFactory is SimpleTokenFactory, NonMintableTokenFactory {
-    event SaleCreated(address addr);
+contract SimpleTransferringIcoFactory is AbstractIcoFactory, SimpleTokenFactory, NonMintableTokenFactory {
 
     function afterTokenCreate(address token) internal {
         super.afterTokenCreate(token);

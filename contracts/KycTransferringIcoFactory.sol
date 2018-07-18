@@ -4,10 +4,10 @@ pragma solidity ^0.4.24;
 import "./SimpleTokenFactory.sol";
 import "./NonMintableTokenFactory.sol";
 import "./KycProviderFactory.sol";
+import "./AbstractIcoFactory.sol";
 
 
-contract KycTransferringIcoFactory is KycProviderFactory, NonMintableTokenFactory, SimpleTokenFactory {
-    event SaleCreated(address addr);
+contract KycTransferringIcoFactory is AbstractIcoFactory, KycProviderFactory, NonMintableTokenFactory, SimpleTokenFactory {
 
     function createIco(bytes tokenCode, uint cap, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
         if (kycProvider == address(0)) {

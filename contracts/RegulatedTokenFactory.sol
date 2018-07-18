@@ -20,8 +20,8 @@ contract RegulatedTokenFactory is Jurisdictions, AbstractTokenFactory, KycProvid
         fakeRegulatorService = _fakeRegulatorService;
     }
 
-    function createRegulatedToken(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) public {
-        address token = createRegulatedTokenInternal(code, operator, kycProviders, jurisdictions, rules, holders);
+    function createToken(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) public {
+        address token = createTokenInternal(code, operator, kycProviders, jurisdictions, rules, holders);
         setKycProviders(token, operator, kycProviders);
         setRules(token, jurisdictions, rules);
         afterTokenCreate(token);
@@ -31,7 +31,7 @@ contract RegulatedTokenFactory is Jurisdictions, AbstractTokenFactory, KycProvid
 
     function afterTokenCreate(address token) internal;
 
-    function createRegulatedTokenInternal(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) internal returns (address) {
+    function createTokenInternal(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) internal returns (address) {
         address token = deploy(concat(code, bytes32(address(regulatorService))));
         emit TokenCreated(token);
         RegulatedTokenImpl(token).setRegulatorService(fakeRegulatorService);

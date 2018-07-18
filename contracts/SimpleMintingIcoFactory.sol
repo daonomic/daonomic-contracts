@@ -5,10 +5,10 @@ import "@daonomic/util/contracts/SafeMath.sol";
 import "@daonomic/util/contracts/SecuredImpl.sol";
 import "./MintableTokenFactory.sol";
 import "./SimpleTokenFactory.sol";
+import "./AbstractIcoFactory.sol";
 
 
-contract SimpleMintingIcoFactory is MintableTokenFactory, SimpleTokenFactory {
-    event SaleCreated(address addr);
+contract SimpleMintingIcoFactory is AbstractIcoFactory, MintableTokenFactory, SimpleTokenFactory {
 
     function createIco(bytes tokenCode, uint[] memory holders, bytes saleCode) public {
         address token = createTokenInternal(tokenCode, holders);
