@@ -2,20 +2,20 @@ pragma solidity ^0.4.24;
 
 
 import "@daonomic/util/contracts/SafeMath.sol";
-import "./KycProviderFactory.sol";
 import "./MintableTokenFactory.sol";
 import "./SimpleTokenFactory.sol";
 import "./AbstractIcoFactory.sol";
+import "./WhitelistFactory.sol";
 
 
-contract KycMintingIcoFactory is AbstractIcoFactory, KycProviderFactory, MintableTokenFactory, SimpleTokenFactory {
+contract WhitelistMintingIcoFactory is AbstractIcoFactory, WhitelistFactory, MintableTokenFactory, SimpleTokenFactory {
 
-    function createIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address kycProvider) public {
-        if (kycProvider == address(0)) {
-            kycProvider = createKycProvider(operator);
+    function createIco(bytes tokenCode, uint[] memory holders, bytes saleCode, address operator, address whitelist) public {
+        if (whitelist == address(0)) {
+            whitelist = createWhitelist(operator);
         }
         address token = createTokenInternal(tokenCode, holders);
-        address sale = deploy(concat(saleCode, bytes32(token), bytes32(address(kycProvider))));
+        address sale = deploy(concat(saleCode, bytes32(token), bytes32(address(whitelist))));
         finishCreate(token, sale);
     }
 

@@ -1,8 +1,8 @@
-var IcoFactory = artifacts.require('KycTransferringIcoFactory.sol');
+var IcoFactory = artifacts.require('WhitelistTransferringIcoFactory.sol');
 var TransferringSale = artifacts.require('TransferringSale.sol');
 var BasicToken = artifacts.require('BasicToken.sol');
 var Secured = artifacts.require('Secured.sol');
-var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
+var WhitelistKycProvider = artifacts.require('WhitelistKycProvider.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
@@ -10,7 +10,7 @@ const awaitEvent = tests.awaitEvent;
 const expectThrow = tests.expectThrow;
 const randomAddress = tests.randomAddress;
 
-contract("KycTransferringIcoFactory", accounts => {
+contract("WhitelistTransferringIcoFactory", accounts => {
   let data;
 
   let factory;
@@ -31,7 +31,7 @@ contract("KycTransferringIcoFactory", accounts => {
   });
 
   it("should deploy ico and new provider", async () => {
-    var tx = await factory.createIco(data.issuedToken, "100000000000000000000000", ["10000000000000000000000"], data.kycTransferringSale, accounts[9], ZERO);
+    var tx = await factory.createIco(data.issuedToken, "100000000000000000000000", ["10000000000000000000000"], data.whitelistTransferringSale, accounts[9], ZERO);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
@@ -39,13 +39,13 @@ contract("KycTransferringIcoFactory", accounts => {
 
     var sale = await TransferringSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
-    var provider = KycProviderImpl.at(providerCreated.args.addr);
+    var provider = WhitelistKycProvider.at(providerCreated.args.addr);
 
     assert.equal(await sale.canBuy(accounts[1]), false);
     await expectThrow(
         sale.sendTransaction({from: accounts[1], value: 5})
     );
-    await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
+    await provider.setWhitelist(accounts[1], true, {from: accounts[9]});
     assert.equal(await sale.canBuy(accounts[1]), true);
 
     await sale.sendTransaction({from: accounts[1], value: 5});

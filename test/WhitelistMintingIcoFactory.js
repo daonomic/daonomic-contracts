@@ -1,8 +1,8 @@
-var IcoFactory = artifacts.require('KycMintingIcoFactory.sol');
+var IcoFactory = artifacts.require('WhitelistMintingIcoFactory.sol');
 var MintingSale = artifacts.require('MintingSaleMock.sol');
 var MintableToken = artifacts.require('MintableToken.sol');
 var Secured = artifacts.require('Secured.sol');
-var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
+var WhitelistKycProvider = artifacts.require('WhitelistKycProvider.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
@@ -10,7 +10,7 @@ const awaitEvent = tests.awaitEvent;
 const expectThrow = tests.expectThrow;
 const randomAddress = tests.randomAddress;
 
-contract("KycMintingIcoFactory", accounts => {
+contract("WhitelistMintingIcoFactory", accounts => {
   let data;
 
   let factory;
@@ -41,7 +41,7 @@ contract("KycMintingIcoFactory", accounts => {
   });
 
   it("should deploy ico and new provider", async () => {
-    var tx = await factory.createIco(data.simpleToken, [1000], data.kycSale, accounts[9], ZERO);
+    var tx = await factory.createIco(data.simpleToken, [1000], data.whitelistSale, accounts[9], ZERO);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);
@@ -49,13 +49,13 @@ contract("KycMintingIcoFactory", accounts => {
 
     var sale = await MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
-    var provider = KycProviderImpl.at(providerCreated.args.addr);
+    var provider = WhitelistKycProvider.at(providerCreated.args.addr);
 
     assert.equal(await sale.canBuy(accounts[1]), false);
     await expectThrow(
         sale.sendTransaction({from: accounts[1], value: 5})
     );
-    await provider.setData(accounts[1], ALLOWED, "", {from: accounts[9]});
+    await provider.setWhitelist(accounts[1], true, {from: accounts[9]});
     assert.equal(await sale.canBuy(accounts[1]), true);
 
     await sale.sendTransaction({from: accounts[1], value: 5});
