@@ -1,26 +1,39 @@
-function createProvider(host) {
-    var ProviderEngine = require("web3-provider-engine");
-    var WalletSubprovider = require('web3-provider-engine/subproviders/wallet.js');
-    var Web3Subprovider = require("web3-provider-engine/subproviders/web3.js");
-    var Web3 = require("web3");
-    var FilterSubprovider = require('web3-provider-engine/subproviders/filters.js')
-    var Wallet = require("ethereumjs-wallet");
+function createNetwork(name) {
+  var os = require('os');
+  var json = require(os.homedir() + "/.ethereum/" + name + ".json");
 
-    function createEngine(url, wallet) {
-        var engine = new ProviderEngine();
-        engine.addProvider(new WalletSubprovider(wallet, {}));
-        engine.addProvider(new FilterSubprovider());
-        engine.addProvider(new Web3Subprovider(new Web3.providers.HttpProvider(url)));
-        engine.on('error', function(err) {
-            console.error(err.stack)
-        });
-        return engine;
-    }
+  return {
+    provider: () => createProvider(json.key, json.url),
+    from: json.address,
+    gas: 4000000,
+    gasPrice: 1000000000,
+    network_id: json.network_id
+  };
+}
 
-    var wallet = Wallet.fromPrivateKey(new Buffer("00120de4b1518cf1f16dc1b02f6b4a8ac29e870174cb1d8575f578480930250a", "hex"));
-    var engine = createEngine("http://" + host + ":8545", wallet);
-    engine.start();
+function createProvider(key, url) {
+  var ProviderEngine = require("web3-provider-engine");
+  var WalletSubprovider = require('web3-provider-engine/subproviders/wallet.js');
+  var Web3Subprovider = require("web3-provider-engine/subproviders/web3.js");
+  var Web3 = require("web3");
+  var FilterSubprovider = require('web3-provider-engine/subproviders/filters.js')
+  var Wallet = require("ethereumjs-wallet");
+
+  function createEngine(url, wallet) {
+    var engine = new ProviderEngine();
+    engine.addProvider(new WalletSubprovider(wallet, {}));
+    engine.addProvider(new FilterSubprovider());
+    engine.addProvider(new Web3Subprovider(new Web3.providers.HttpProvider(url)));
+    engine.on('error', function(err) {
+        console.error(err.stack)
+    });
     return engine;
+  }
+
+  var wallet = Wallet.fromPrivateKey(new Buffer(key, "hex"));
+  var engine = createEngine(url, wallet);
+  engine.start();
+  return engine;
 }
 
 module.exports = {
@@ -39,13 +52,7 @@ module.exports = {
       gasPrice: 1000000000,
       network_id: "*"
     },
-    kovan: {
-      provider: () => createProvider("ether-dev"),
-      from: "0xc66d094ed928f7840a6b0d373c1cd825c97e3c7c",
-      gas: 4000000,
-      gasPrice: 1000000000,
-      network_id: "*"
-    },
+    kovan: createNetwork("kovan"),
     kovan_trezor: {
       provider: () => {
         return require("@daonomic/trezor-web3-provider")("http://ether-dev:8545", "m/44'/1'/0'/4/0");
@@ -55,7 +62,8 @@ module.exports = {
       gas: 2000000,
 	    gasPrice: 1000000000
     },
-    mainnet: {
+		mainnet: createNetwork("mainnet"),
+    mainnet_trezor: {
       provider: () => {
         return require("@daonomic/trezor-web3-provider")("http://ether:8545", "m/44'/1'/0'/4/1");
       },
