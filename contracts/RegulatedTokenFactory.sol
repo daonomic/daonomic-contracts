@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@daonomic/regulated/contracts/Jurisdictions.sol";
 import "@daonomic/regulated/contracts/RegulatorServiceImpl.sol";
 import "@daonomic/regulated/contracts/RegulatedTokenImpl.sol";
+import "@daonomic/regulated/contracts/AllowRegulationRule.sol";
 import "./AbstractTokenFactory.sol";
 import "./KycProviderFactory.sol";
 import "./FakeRegulatorService.sol";

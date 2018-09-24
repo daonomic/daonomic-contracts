@@ -1,12 +1,13 @@
 function createNetwork(name) {
   var os = require('os');
   var json = require(os.homedir() + "/.ethereum/" + name + ".json");
+  var gasPrice = json.gasPrice != null ? json.gasPrice : 2000000000;
 
   return {
     provider: () => createProvider(json.key, json.url),
     from: json.address,
     gas: 4000000,
-    gasPrice: 2000000000,
+    gasPrice: gasPrice,
     network_id: json.network_id
   };
 }
@@ -53,6 +54,7 @@ module.exports = {
       network_id: "*"
     },
     kovan: createNetwork("kovan"),
+    ropsten: createNetwork("ropsten"),
     kovan_trezor: {
       provider: () => {
         return require("@daonomic/trezor-web3-provider")("http://ether-dev:8545", "m/44'/1'/0'/4/0");
