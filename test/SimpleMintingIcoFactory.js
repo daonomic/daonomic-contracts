@@ -16,7 +16,6 @@ contract("SimpleMintingIcoFactory", accounts => {
   let factory;
   let TokenCreated;
   let SaleCreated;
-  let HolderCreated;
 
   before(async () => {
     data = require("./data.json");
@@ -26,21 +25,20 @@ contract("SimpleMintingIcoFactory", accounts => {
     factory = await IcoFactory.new();
     TokenCreated = factory.TokenCreated({});
     SaleCreated = factory.SaleCreated({});
-    HolderCreated = factory.HolderCreated({});
   });
 
   it("should deploy token", async () => {
-    var tx = await factory.createToken(data.simpleToken, [500]);
+    var tx = await factory.createToken(data.simpleToken);
     var tokenCreated = await awaitEvent(TokenCreated);
     var token = await MintableToken.at(tokenCreated.args.addr);
 
     await token.mint(accounts[1], 100);
-    assert.equal(await token.totalSupply(), 600);
+    assert.equal(await token.totalSupply(), 100);
     assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 
   it("should deploy ico", async () => {
-    var tx = await factory.createIco(data.simpleToken, [1000], data.simpleSale);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);

@@ -46,13 +46,7 @@ module.exports = {
       gasPrice: 1000000000,
       network_id: "*"
     },
-    ops: {
-      provider: () => createProvider("ops"),
-      from: "0xc66d094ed928f7840a6b0d373c1cd825c97e3c7c",
-      gas: 3000000,
-      gasPrice: 1000000000,
-      network_id: "*"
-    },
+    ops: createNetwork("ops"),
     kovan: createNetwork("kovan"),
     ropsten: createNetwork("ropsten"),
     kovan_trezor: {
@@ -64,7 +58,7 @@ module.exports = {
       gas: 2000000,
 	    gasPrice: 1000000000
     },
-		mainnet: createNetwork("mainnet"),
+	mainnet: createNetwork("mainnet"),
     mainnet_trezor: {
       provider: () => {
         return require("@daonomic/trezor-web3-provider")("http://ether:8545", "m/44'/1'/0'/4/1");

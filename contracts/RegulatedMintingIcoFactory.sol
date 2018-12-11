@@ -1,27 +1,22 @@
 pragma solidity ^0.4.24;
 
 
-import "./MintableTokenFactory.sol";
 import "./RegulatedTokenFactory.sol";
 import "./AbstractIcoFactory.sol";
 
 
-contract RegulatedMintingIcoFactory is AbstractIcoFactory, MintableTokenFactory, RegulatedTokenFactory {
+contract RegulatedMintingIcoFactory is AbstractIcoFactory, AbstractTokenFactory, RegulatedTokenFactory {
 
-    constructor(RegulatorServiceImpl _regulatorService, FakeRegulatorService _fakeRegulatorService) RegulatedTokenFactory(_regulatorService, _fakeRegulatorService) public {
+    constructor(RegulatorServiceImpl _regulatorService) RegulatedTokenFactory(_regulatorService) public {
     }
 
-    function createIco(bytes tokenCode, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders, bytes saleCode) public {
-        address token = createTokenInternal(tokenCode, operator, kycProviders, jurisdictions, rules, holders);
+    function createIco(bytes tokenCode, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, bytes saleCode) public {
+        address token = createTokenInternal(tokenCode, operator, kycProviders, jurisdictions, rules);
         setKycProviders(token, operator, kycProviders);
         setRules(token, jurisdictions, rules);
 
         address sale = deploy(concat(saleCode, bytes32(token)));
         finishCreate(token, sale);
-    }
-
-    function afterTokenCreate(address token) internal {
-
     }
 
     function finishCreate(address token, address sale) internal {

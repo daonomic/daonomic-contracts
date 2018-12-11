@@ -31,7 +31,7 @@ contract("WhitelistMintingIcoFactory", accounts => {
   });
 
   it("should deploy token", async () => {
-    var tx = await factory.createToken(data.simpleToken, []);
+    var tx = await factory.createToken(data.simpleToken);
     var tokenCreated = await awaitEvent(TokenCreated);
     var token = await MintableToken.at(tokenCreated.args.addr);
 
@@ -41,7 +41,7 @@ contract("WhitelistMintingIcoFactory", accounts => {
   });
 
   it("should deploy ico and new provider", async () => {
-    var tx = await factory.createIco(data.simpleToken, [1000], data.whitelistSale, accounts[9], ZERO);
+    var tx = await factory.createIco(data.simpleToken, data.whitelistSale, accounts[9], ZERO);
 
     var tokenCreated = await awaitEvent(TokenCreated);
     var saleCreated = await awaitEvent(SaleCreated);

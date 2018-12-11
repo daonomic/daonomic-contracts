@@ -1,13 +1,14 @@
 pragma solidity ^0.4.24;
 
 
-import "./MintableTokenFactory.sol";
+import "./AbstractTokenFactory.sol";
+import "@daonomic/util/contracts/OwnableImpl.sol";
 
 
 contract SimpleTokenFactory is AbstractTokenFactory {
 
-    function createToken(bytes code, uint[] holders) public {
-        address token = createTokenInternal(code, holders);
+    function createToken(bytes code) public {
+        address token = createTokenInternal(code);
         afterTokenCreate(token);
     }
 
@@ -15,10 +16,9 @@ contract SimpleTokenFactory is AbstractTokenFactory {
         OwnableImpl(token).transferOwnership(msg.sender);
     }
 
-    function createTokenInternal(bytes code, uint[] memory holders) internal returns (address) {
+    function createTokenInternal(bytes code) internal returns (address) {
         address token = deploy(code);
         emit TokenCreated(token);
-        createTokenHolders(token, holders);
         return token;
     }
 }

@@ -3,15 +3,14 @@ pragma solidity ^0.4.24;
 
 import "@daonomic/util/contracts/SafeMath.sol";
 import "@daonomic/util/contracts/SecuredImpl.sol";
-import "./MintableTokenFactory.sol";
 import "./SimpleTokenFactory.sol";
 import "./AbstractIcoFactory.sol";
 
 
-contract SimpleMintingIcoFactory is AbstractIcoFactory, MintableTokenFactory, SimpleTokenFactory {
+contract SimpleMintingIcoFactory is AbstractIcoFactory, SimpleTokenFactory {
 
-    function createIco(bytes tokenCode, uint[] memory holders, bytes saleCode) public {
-        address token = createTokenInternal(tokenCode, holders);
+    function createIco(bytes tokenCode, bytes saleCode) public {
+        address token = createTokenInternal(tokenCode);
         address sale = deploy(concat(saleCode, bytes32(token)));
         finishCreate(token, sale);
     }

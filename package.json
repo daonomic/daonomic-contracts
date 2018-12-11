@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "@daonomic/util": "~0.1",
-    "@daonomic/regulated": "^0.1.13"
+    "@daonomic/regulated": "^0.1.14"
   },
   "devDependencies": {
     "@daonomic/tests-common": "~0.1",

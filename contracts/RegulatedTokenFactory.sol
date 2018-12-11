@@ -14,30 +14,23 @@ import "./FakeRegulatorService.sol";
 contract RegulatedTokenFactory is Jurisdictions, AbstractTokenFactory, KycProviderFactory {
 
     RegulatorServiceImpl public regulatorService;
-    FakeRegulatorService public fakeRegulatorService;
 
-    constructor(RegulatorServiceImpl _regulatorService, FakeRegulatorService _fakeRegulatorService) public {
+    constructor(RegulatorServiceImpl _regulatorService) public {
         regulatorService = _regulatorService;
-        fakeRegulatorService = _fakeRegulatorService;
     }
 
-    function createToken(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) public {
-        address token = createTokenInternal(code, operator, kycProviders, jurisdictions, rules, holders);
+    function createToken(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules) public {
+        RegulatedTokenImpl token = createTokenInternal(code, operator, kycProviders, jurisdictions, rules);
         setKycProviders(token, operator, kycProviders);
         setRules(token, jurisdictions, rules);
-        afterTokenCreate(token);
-        RegulatedTokenImpl(token).setRegulatorService(regulatorService);
+        token.setRegulatorService(regulatorService);
         OwnableImpl(token).transferOwnership(msg.sender);
     }
 
-    function afterTokenCreate(address token) internal;
-
-    function createTokenInternal(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules, uint[] memory holders) internal returns (address) {
+    function createTokenInternal(bytes code, address operator, address[] memory kycProviders, uint16[] memory jurisdictions, address[] memory rules) internal returns (RegulatedTokenImpl) {
         address token = deploy(concat(code, bytes32(address(regulatorService))));
         emit TokenCreated(token);
-        RegulatedTokenImpl(token).setRegulatorService(fakeRegulatorService);
-        createTokenHolders(token, holders);
-        return token;
+        return RegulatedTokenImpl(token);
     }
 
     function setKycProviders(address token, address operator, address[] memory kycProviders) internal {
