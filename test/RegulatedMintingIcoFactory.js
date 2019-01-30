@@ -12,7 +12,7 @@ var KycProviderImpl = artifacts.require('KycProviderImpl.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
-const awaitEvent = tests.awaitEvent;
+const findLog = tests.findLog;
 const expectThrow = tests.expectThrow;
 const randomAddress = tests.randomAddress;
 
@@ -42,8 +42,8 @@ contract("RegulatedMintingIcoFactory", accounts => {
 
   it("should deploy regulated token and kyc provider", async () => {
     var tx = await factory.createToken(data.regulatedToken, accounts[9], [ZERO], [ALLOWED], [allowRegulationRule.address]);
-    var providerCreated = await awaitEvent(KycProviderCreated);
-    var tokenCreated = await awaitEvent(TokenCreated);
+    var providerCreated = findLog(tx, "KycProviderCreated");
+    var tokenCreated = findLog(tx, "TokenCreated");
 
     var provider = KycProviderImpl.at(providerCreated.args.addr);
     var token = RegulatedMintableTokenImpl.at(tokenCreated.args.addr);
@@ -65,9 +65,9 @@ contract("RegulatedMintingIcoFactory", accounts => {
     var usProvider = await KycProviderImpl.new();
     var tx = await factory.createIco(data.regulatedToken, accounts[9], [ZERO, usProvider.address], [ALLOWED], [allowRegulationRule.address], data.securitySale);
 
-    var tokenCreated = await awaitEvent(TokenCreated);
-    var saleCreated = await awaitEvent(SaleCreated);
-    var providerCreated = await awaitEvent(KycProviderCreated);
+    var tokenCreated = findLog(tx, "TokenCreated");
+    var saleCreated = findLog(tx, "SaleCreated");
+    var providerCreated = findLog(tx, "KycProviderCreated");
 
 	  var token = RegulatedMintableTokenImpl.at(tokenCreated.args.addr);
     var sale = MintingSale.at(saleCreated.args.addr);

@@ -6,7 +6,7 @@ var WhitelistKycProvider = artifacts.require('WhitelistKycProvider.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
-const awaitEvent = tests.awaitEvent;
+const findLog = tests.findLog;
 const expectThrow = tests.expectThrow;
 const randomAddress = tests.randomAddress;
 
@@ -32,7 +32,7 @@ contract("WhitelistMintingIcoFactory", accounts => {
 
   it("should deploy token", async () => {
     var tx = await factory.createToken(data.simpleToken);
-    var tokenCreated = await awaitEvent(TokenCreated);
+    var tokenCreated = findLog(tx, "TokenCreated");
     var token = await MintableToken.at(tokenCreated.args.addr);
 
     await token.mint(accounts[1], 100);
@@ -43,9 +43,9 @@ contract("WhitelistMintingIcoFactory", accounts => {
   it("should deploy ico and new provider", async () => {
     var tx = await factory.createIco(data.simpleToken, data.whitelistSale, accounts[9], ZERO);
 
-    var tokenCreated = await awaitEvent(TokenCreated);
-    var saleCreated = await awaitEvent(SaleCreated);
-    var providerCreated = await awaitEvent(KycProviderCreated);
+    var tokenCreated = findLog(tx, "TokenCreated");
+    var saleCreated = findLog(tx, "SaleCreated");
+    var providerCreated = findLog(tx, "KycProviderCreated");
 
     var sale = await MintingSale.at(saleCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);

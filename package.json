@@ -15,7 +15,7 @@
     "@daonomic/regulated": "^0.1.14"
   },
   "devDependencies": {
-    "@daonomic/tests-common": "~0.1",
+    "@daonomic/tests-common": "~0.2",
     "@daonomic/tokens": "~0.1",
     "@daonomic/sale": "^0.1.37"
   }
