@@ -1,28 +1,41 @@
-/**
- * Use this file to configure your truffle project. It's seeded with some
- * common settings for different networks and features like migrations,
- * compilation and testing. Uncomment the ones you need or modify
- * them to suit your project as necessary.
- *
- * More information about configuration can be found at:
- *
- * truffleframework.com/docs/advanced/configuration
- *
- * To deploy via Infura you'll need a wallet provider (like truffle-hdwallet-provider)
- * to sign your transactions before they're sent to a remote public node. Infura API
- * keys are available for free at: infura.io/register
- *
- * You'll also need a mnemonic - the twelve word phrase the wallet uses to generate
- * public/private key pairs. If you're publishing your code to GitHub make sure you load this
- * phrase from a file you've .gitignored so it doesn't accidentally become public.
- *
- */
+function createNetwork(name) {
+  var os = require('os');
+  var json = require(os.homedir() + "/.ethereum/" + name + ".json");
+  var gasPrice = json.gasPrice != null ? json.gasPrice : 2000000000;
 
-// const HDWalletProvider = require('truffle-hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
+  return {
+    provider: () => createProvider(json.key, json.url),
+    from: json.address,
+    gas: 5000000,
+    gasPrice: gasPrice,
+    network_id: json.network_id
+  };
+}
+
+function createProvider(key, url) {
+  var ProviderEngine = require("web3-provider-engine");
+  var WalletSubprovider = require('web3-provider-engine/subproviders/wallet.js');
+  var Web3Subprovider = require("web3-provider-engine/subproviders/web3.js");
+  var Web3 = require("web3");
+  var FilterSubprovider = require('web3-provider-engine/subproviders/filters.js')
+  var Wallet = require("ethereumjs-wallet");
+
+  function createEngine(url, wallet) {
+    var engine = new ProviderEngine();
+    engine.addProvider(new WalletSubprovider(wallet, {}));
+    engine.addProvider(new FilterSubprovider());
+    engine.addProvider(new Web3Subprovider(new Web3.providers.HttpProvider(url)));
+    engine.on('error', function(err) {
+        console.error(err.stack)
+    });
+    return engine;
+  }
+
+  var wallet = Wallet.fromPrivateKey(new Buffer(key, "hex"));
+  var engine = createEngine(url, wallet);
+  engine.start();
+  return engine;
+}
 
 module.exports = {
   /**
@@ -36,6 +49,8 @@ module.exports = {
    */
 
   networks: {
+    ropsten: () => createNetwork("ropsten"),
+    ops: () => createNetwork("ops"),
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
@@ -85,7 +100,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.4.25",
+      version: "0.5.3",
       settings: {
         optimizer: {
           enabled : true,

@@ -11,12 +11,11 @@
     "solidity"
   ],
   "dependencies": {
-    "@daonomic/util": "~0.1",
-    "@daonomic/regulated": "^0.1.14"
+    "@daonomic/regulated": "^0.3.0",
+    "openzeppelin-solidity": "^2.1.2"
   },
   "devDependencies": {
     "@daonomic/tests-common": "~0.2",
-    "@daonomic/tokens": "~0.1",
-    "@daonomic/sale": "^0.1.37"
+    "@daonomic/sale": "^0.3.7"
   }
 }

@@ -1,14 +1,18 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 contract Deployer {
-    function deploy(bytes binary) internal returns (address result) {
+    function addressToBytes32(address addr) pure internal returns (bytes32) {
+        return bytes32(uint256(addr));
+    }
+
+    function deploy(bytes memory binary) internal returns (address result) {
         assembly {
             result := create(0, add(binary, 0x20), mload(binary))
             switch extcodesize(result) case 0 {revert(0, 0)} default {}
         }
     }
 
-    function concat(bytes _bytes, bytes32 _word) internal pure returns (bytes result) {
+    function concat(bytes memory _bytes, bytes32 _word) internal pure returns (bytes memory result) {
         assembly {
             result := mload(0x40)
 
@@ -43,7 +47,7 @@ contract Deployer {
         }
     }
 
-    function concat(bytes _bytes, bytes32 _word1, bytes32 _word2) internal pure returns (bytes result) {
+    function concat(bytes memory _bytes, bytes32 _word1, bytes32 _word2) internal pure returns (bytes memory result) {
         assembly {
             result := mload(0x40)
 
