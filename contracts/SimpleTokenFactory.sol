@@ -14,12 +14,12 @@ contract SimpleTokenFactory is AbstractTokenFactory {
     }
 
     function afterTokenCreate(address token) internal {
-        MinterRole(token).addMinter(msg.sender);
         MinterRole(token).renounceMinter();
     }
 
     function createTokenInternal(bytes memory code, bytes memory poolsCode) internal returns (address) {
         address token = deploy(code);
+        MinterRole(token).addMinter(msg.sender);
         emit TokenCreated(token);
         if (poolsCode.length != 0) {
             deployPoolsInternal(poolsCode, token);
