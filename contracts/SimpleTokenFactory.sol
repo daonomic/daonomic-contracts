@@ -30,6 +30,7 @@ contract SimpleTokenFactory is AbstractTokenFactory {
     function deployPoolsInternal(bytes memory poolsCode, address token) internal {
         address pools = deploy(concat(poolsCode, addressToBytes32(token)));
         Ownable(pools).transferOwnership(msg.sender);
+        MinterRole(token).addMinter(pools);
         emit PoolsCreated(pools);
     }
 }

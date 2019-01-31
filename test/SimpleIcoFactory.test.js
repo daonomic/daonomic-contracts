@@ -1,7 +1,8 @@
 var IcoFactory = artifacts.require('SimpleIcoFactory.sol');
 var Sale = artifacts.require('SimpleSaleMock.sol');
 var MintableToken = artifacts.require('ERC20Mintable.sol');
-var Ownable = artifacts.require('Ownable.sol');
+var Pools = artifacts.require('Pools.sol');
+var MinterRole = artifacts.require('MinterRole.sol');
 var ZERO = "0x0000000000000000000000000000000000000000";
 
 const tests = require("@daonomic/tests-common");
@@ -43,10 +44,15 @@ contract("SimpleIcoFactory", accounts => {
     var tx = await factory.createToken(data.simpleToken, data.pools);
     console.log(tx.receipt.gasUsed);
 
+    var tokenCreated = findLog(tx, "TokenCreated");
+    var token = await MintableToken.at(tokenCreated.args.addr);
     var poolsCreated = findLog(tx, "PoolsCreated");
-    var pools = await Ownable.at(poolsCreated.args.addr);
+    var pools = await Pools.at(poolsCreated.args.addr);
 
     assert.equal(await pools.owner(), accounts[0]);
+    assert(await token.isMinter(pools.address), "pools is not minter");
+    await pools.createHolder("direct", accounts[1], 100);
+    assert.equal(await token.balanceOf(accounts[1]), 100);
   });
 
   it("should deploy ico", async () => {
@@ -68,7 +74,7 @@ contract("SimpleIcoFactory", accounts => {
     console.log(tx.receipt.gasUsed);
 
     var poolsCreated = findLog(tx, "PoolsCreated");
-    var pools = await Ownable.at(poolsCreated.args.addr);
+    var pools = await Pools.at(poolsCreated.args.addr);
 
     assert.equal(await pools.owner(), accounts[0]);
   });
