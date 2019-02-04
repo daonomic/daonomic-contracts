@@ -4,15 +4,20 @@ pragma solidity ^0.5.0;
 import "./TokenPools.sol";
 import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@daonomic/lib/contracts/roles/WhitelistAdminRole.sol";
 import "./SimpleTokenFactory.sol";
 import "./AbstractIcoFactory.sol";
 
 
-contract SimpleIcoFactory is AbstractIcoFactory, SimpleTokenFactory  {
 
-    function createIco(bytes memory tokenCode, bytes memory saleCode, bytes memory poolsCode) public {
+contract SimpleIcoFactory is AbstractIcoFactory, SimpleTokenFactory {
+
+    function createIco(bytes memory tokenCode, bytes memory saleCode, bytes memory poolsCode, bool addWhitelistAdmin) public {
         address token = createTokenInternal(tokenCode, poolsCode);
         address sale = deploy(concat(saleCode, addressToBytes32(token)));
+        if (addWhitelistAdmin) {
+            WhitelistAdminRole(sale).addWhitelistAdmin(msg.sender);
+        }
         finishCreate(token, sale);
     }
 

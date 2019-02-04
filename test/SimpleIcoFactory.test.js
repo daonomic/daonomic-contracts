@@ -56,7 +56,7 @@ contract("SimpleIcoFactory", accounts => {
   });
 
   it("should deploy ico", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x");
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", false);
     console.log(tx.receipt.gasUsed);
 
     var tokenCreated = findLog(tx, "TokenCreated");
@@ -70,7 +70,7 @@ contract("SimpleIcoFactory", accounts => {
   });
 
   it("should deploy ico with pools", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools, false);
     console.log(tx.receipt.gasUsed);
 
     var poolsCreated = findLog(tx, "PoolsCreated");
