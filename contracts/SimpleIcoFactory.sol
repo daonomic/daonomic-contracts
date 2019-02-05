@@ -12,11 +12,11 @@ import "./AbstractIcoFactory.sol";
 
 contract SimpleIcoFactory is AbstractIcoFactory, SimpleTokenFactory {
 
-    function createIco(bytes memory tokenCode, bytes memory saleCode, bytes memory poolsCode, bool addWhitelistAdmin) public {
+    function createIco(bytes memory tokenCode, bytes memory saleCode, bytes memory poolsCode, address[] memory whitelistAdmins) public {
         address token = createTokenInternal(tokenCode, poolsCode);
         address sale = deploy(concat(saleCode, addressToBytes32(token)));
-        if (addWhitelistAdmin) {
-            WhitelistAdminRole(sale).addWhitelistAdmin(msg.sender);
+        for (uint i = 0; i < whitelistAdmins.length; i++) {
+            WhitelistAdminRole(sale).addWhitelistAdmin(whitelistAdmins[i]);
         }
         finishCreate(token, sale);
     }

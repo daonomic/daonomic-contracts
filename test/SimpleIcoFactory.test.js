@@ -56,7 +56,7 @@ contract("SimpleIcoFactory", accounts => {
   });
 
   it("should deploy ico", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", false);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", []);
     console.log(tx.receipt.gasUsed);
 
     var tokenCreated = findLog(tx, "TokenCreated");
@@ -65,12 +65,12 @@ contract("SimpleIcoFactory", accounts => {
     var token = await MintableToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
 
-    await sale.sendTransaction({from: accounts[5], value: 5});
+    await sale.sendTransaction({from: accounts[5], value: 5000});
     assert.equal(await token.balanceOf(accounts[5]), 5000000);
   });
 
   it("should deploy ico with pools", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools, false);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools, []);
     console.log(tx.receipt.gasUsed);
 
     var poolsCreated = findLog(tx, "PoolsCreated");

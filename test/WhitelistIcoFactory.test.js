@@ -27,7 +27,7 @@ contract("SimpleIcoFactory (whitelist)", accounts => {
   });
 
   it("should deploy ico with whitelist", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.whitelistSale, "0x", true);
+    var tx = await factory.createIco(data.simpleToken, data.whitelistSale, "0x", [accounts[1]]);
     console.log(tx.receipt.gasUsed);
 
     var tokenCreated = findLog(tx, "TokenCreated");
@@ -36,9 +36,8 @@ contract("SimpleIcoFactory (whitelist)", accounts => {
     var token = await MintableToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
 
-    await sale.addWhitelistAdmin(accounts[1]);
-    await sale.setWhitelisted(accounts[5], true);
-    await sale.sendTransaction({from: accounts[5], value: 5});
+    await sale.setWhitelisted(accounts[5], true, {from: accounts[1]});
+    await sale.sendTransaction({from: accounts[5], value: 5000});
     assert.equal(await token.balanceOf(accounts[5]), 5000000);
   });
 
