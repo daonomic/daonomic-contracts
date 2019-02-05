@@ -16,7 +16,11 @@ contract SimpleIcoFactory is AbstractIcoFactory, SimpleTokenFactory {
         address token = createTokenInternal(tokenCode, poolsCode);
         address sale = deploy(concat(saleCode, addressToBytes32(token)));
         for (uint i = 0; i < whitelistAdmins.length; i++) {
-            WhitelistAdminRole(sale).addWhitelistAdmin(whitelistAdmins[i]);
+            address admin = whitelistAdmins[i];
+            if (admin == address(0)) {
+                admin = msg.sender;
+            }
+            WhitelistAdminRole(sale).addWhitelistAdmin(admin);
         }
         finishCreate(token, sale);
     }
