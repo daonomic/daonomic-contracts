@@ -4,7 +4,7 @@ function createNetwork(name) {
   var gasPrice = json.gasPrice != null ? json.gasPrice : 2000000000;
 
   return {
-    provider: () => createProvider(json.key, json.url),
+    provider: () => createProvider(json.address, json.key, json.url),
     from: json.address,
     gas: 1000000,
     gasPrice: gasPrice,
@@ -12,7 +12,8 @@ function createNetwork(name) {
   };
 }
 
-function createProvider(key, url) {
+function createProvider(address, key, url) {
+  console.log("creating provider for address: " + address);
   var HDWalletProvider = require("truffle-hdwallet-provider");
   return new HDWalletProvider(key, url);
 }
