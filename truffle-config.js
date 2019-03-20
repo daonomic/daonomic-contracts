@@ -21,6 +21,7 @@ function createProvider(address, key, url) {
 module.exports = {
   networks: {
     ropsten: createNetwork("ropsten"),
+    mainnet: createNetwork("mainnet"),
     ops: createNetwork("ops"),
   },
 
