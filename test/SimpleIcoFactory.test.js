@@ -79,4 +79,15 @@ contract("SimpleIcoFactory", accounts => {
     assert.equal(await pools.owner(), accounts[0]);
   });
 
+  it("should deploy ico with pools and without sale", async () => {
+    var tx = await factory.createIco(data.simpleToken, "0x", data.pools, []);
+    console.log(tx.receipt.gasUsed);
+
+    var poolsCreated = findLog(tx, "PoolsCreated");
+    var pools = await Pools.at(poolsCreated.args.addr);
+
+    assert(findLog(tx, "SaleCreated") == null);
+    assert.equal(await pools.owner(), accounts[0]);
+  });
+
 });
