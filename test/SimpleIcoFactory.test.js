@@ -56,13 +56,13 @@ contract("SimpleIcoFactory", accounts => {
   });
 
   it("should deploy ico", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", []);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", [], 0);
     console.log(tx.receipt.gasUsed);
 
     var tokenCreated = findLog(tx, "TokenCreated");
+    var token = await MintableToken.at(tokenCreated.args.addr);
     var saleCreated = findLog(tx, "SaleCreated");
     var sale = await Sale.at(saleCreated.args.addr);
-    var token = await MintableToken.at(tokenCreated.args.addr);
     assert.equal(await sale.token(), tokenCreated.args.addr);
 
     await sale.sendTransaction({from: accounts[5], value: 5000});
@@ -70,7 +70,7 @@ contract("SimpleIcoFactory", accounts => {
   });
 
   it("should deploy ico with pools", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools, []);
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, data.pools, [], 0);
     console.log(tx.receipt.gasUsed);
 
     var poolsCreated = findLog(tx, "PoolsCreated");
@@ -79,8 +79,18 @@ contract("SimpleIcoFactory", accounts => {
     assert.equal(await pools.owner(), accounts[0]);
   });
 
+  it("should deploy ico and transfer IEO tokens", async () => {
+    var tx = await factory.createIco(data.simpleToken, data.simpleSale, "0x", [], 100);
+    console.log(tx.receipt.gasUsed);
+
+    var tokenCreated = findLog(tx, "TokenCreated");
+    var token = await MintableToken.at(tokenCreated.args.addr);
+
+    assert.equal(await token.balanceOf(accounts[0]), 100);
+  });
+
   it("should deploy ico with pools and without sale", async () => {
-    var tx = await factory.createIco(data.simpleToken, "0x", data.pools, []);
+    var tx = await factory.createIco(data.simpleToken, "0x", data.pools, [], 0);
     console.log(tx.receipt.gasUsed);
 
     var poolsCreated = findLog(tx, "PoolsCreated");

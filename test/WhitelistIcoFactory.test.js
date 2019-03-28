@@ -27,7 +27,7 @@ contract("SimpleIcoFactory (whitelist)", accounts => {
   });
 
   it("should deploy ico with whitelist", async () => {
-    var tx = await factory.createIco(data.simpleToken, data.whitelistSale, "0x", [accounts[1]]);
+    var tx = await factory.createIco(data.simpleToken, data.whitelistSale, "0x", [accounts[1]], 0);
     console.log(tx.receipt.gasUsed);
 
     var tokenCreated = findLog(tx, "TokenCreated");
